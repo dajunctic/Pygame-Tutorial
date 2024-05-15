@@ -227,7 +227,7 @@ class Bird(Obstacle):
         self.type = 0
         super().__init__(app, image_path, self.type)
         self.anim = SpriteAnimated(app, image_path, 0.2)
-        self.rect.y = 370
+        self.rect.y = 375
         self.index = 0
 
     def update(self):

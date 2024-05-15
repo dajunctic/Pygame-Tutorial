@@ -3,6 +3,9 @@ import math
 
 RESOLUTION = WIDTH, HEIGHT = 1280, 720
 
+WHITE = "#ffffff"
+GRAY = "#4c4d4d"
+
 BG = "Assets/Other/Track.png"
 CLOUD = "Assets/Other/Cloud.png"
 
