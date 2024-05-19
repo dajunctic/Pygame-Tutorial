@@ -3,7 +3,6 @@ import sys
 import pygame as pg
 from setings import *
 
-
 class UIComponent:
     def __init__(self, app):
         self.app = app
@@ -26,14 +25,14 @@ class Menu(UIComponent):
     def __init__(self, app):
         super().__init__(app)
 
-        self.scene = Menu.OPTIONS
+        self.scene = Menu.HOME
         self.theme = pg.image.load(THEME_IMG).convert_alpha()
         self.theme.set_alpha(140)  # 1 - 255
 
         self.UIComponents = {
             Menu.HOME: [
-                Text(self.app, "Spider-man", pos=(1000, 320), size=60),
-                Text(self.app, "No way home", pos=(1000, 400), size=40),
+                Text(self.app, text="Spider-man", pos=(1000, 320), size=60),
+                Text(self.app, text="No way home", pos=(1000, 400), size=40),
                 Button(self.app, pos=(200, 300), text="START", font_size=35),
                 Button(self.app, pos=(200, 400), text="OPTION", font_size=35, onclick=[self.changeOptionScene]),
                 Button(self.app, pos=(200, 500), text="QUIT", font_size=35, onclick=[Menu.quit]),
@@ -50,7 +49,8 @@ class Menu(UIComponent):
                 SliderSetting(self.app, "Sound", pos=(WIDTH // 2 + 100, 190), offset=180),
                 ToggleSetting(self.app, "Voice Language", ["English", "Vietnamese", "Japanese", "Korean", "Chinese"],
                               pos=(WIDTH // 2 + 100, 400), offset=310),
-                Button(self.app, pos=(100, 600), text="BACK", font_size=35, topleft=True, onclick=[self.changeHomeScene]),
+                Button(self.app, pos=(100, 600), text="BACK", font_size=35, topleft=True,
+                       onclick=[self.changeHomeScene]),
             ]
         }
 
@@ -79,6 +79,7 @@ class Menu(UIComponent):
     def quit(cls):
         pg.quit()
         sys.exit(0)
+
 
 class Text(UIComponent):
     def __init__(self, app, text: str, color=COLOR, pos: tuple[int, int] = (WIDTH // 2, HEIGHT // 2),
@@ -200,6 +201,7 @@ class SelectSetting(UIComponent):
                 select.draw()
         else:
             self.selections[self.current].draw()
+
 
 class CheckboxSetting(UIComponent):
     def __init__(self, app, text, pos, offset=200):

@@ -1,6 +1,8 @@
+import math
 import random
 
-from Settings import *
+import pygame as pg
+from settings import *
 
 
 class GameObject:
@@ -49,7 +51,7 @@ class SpriteAnimated(GameObject):
         super().__init__(app)
 
         self.images = [
-            pg.image.load(path) for path in path_list
+            pg.image.load(path).convert_alpha() for path in path_list
         ]
 
         self.num_frames = len(self.images)
@@ -70,7 +72,6 @@ class SpriteAnimated(GameObject):
             self.current_frame %= self.num_frames
 
             self.prev_tick = self.current_tick
-
             self.image = self.images[self.current_frame]
 
     def draw(self):
@@ -87,76 +88,75 @@ class Dinosaur(GameObject):
     X = 80
     Y = 420
     Y_DUCK = 450
-    JUMP_SPEED = 1300
+    JUMP_SPEED = 1300  # pixel / s
     GRAVITY = 7
 
     def __init__(self, app):
         super().__init__(app)
+
         self.duck_anim = SpriteAnimated(app, DUCKING, 0.2)
         self.run_anim = SpriteAnimated(app, RUNNING, 0.2)
         self.jump_anim = SpriteAnimated(app, JUMPING, 0.2)
 
-        self.dino_duck = False
-        self.dino_run = True
-        self.dino_jump = False
+        self.duck = False
+        self.run = True
+        self.jump = False
+
         self.jump_v = Dinosaur.JUMP_SPEED
 
         self.image = self.run_anim.getImage()
-        self.dino_rect = self.image.get_rect()
-        self.dino_rect.x = Dinosaur.X
-        self.dino_rect.y = Dinosaur.Y
+        self.rect = self.image.get_rect()
+        self.rect.x = Dinosaur.X
+        self.rect.y = Dinosaur.Y
         self.y = Dinosaur.Y
 
     def update(self):
-        if self.dino_duck:
-            self.duck_anim.update()
-            self.image = self.duck_anim.getImage()
-            self.dino_rect.y = Dinosaur.Y_DUCK
-            self.y = float(self.dino_rect.y)
-
-        if self.dino_run:
+        if self.run:
             self.run_anim.update()
             self.image = self.run_anim.getImage()
-            self.dino_rect.y = Dinosaur.Y
-            self.y = float(self.dino_rect.y)
+            self.rect.y = Dinosaur.Y
+            self.y = float(self.rect.y)
 
-        if self.dino_jump:
+        if self.duck:
+            self.duck_anim.update()
+            self.image = self.duck_anim.getImage()
+            self.rect.y = Dinosaur.Y_DUCK
+            self.y = float(self.rect.y)
+
+        if self.jump:
             self.jump_anim.update()
             self.image = self.jump_anim.getImage()
 
-            self.y -= self.jump_v * self.app.delta_time / 1000.0
-            self.dino_rect.y = int(self.y)
-
+            self.y -= self.jump_v * self.app.delta_time / 1000
             self.jump_v -= Dinosaur.GRAVITY
 
-            if self.y >= 420 and self.jump_v < 0:
-                self.dino_jump = False
-                self.jump_v = self.JUMP_SPEED
+            self.rect.y = int(self.y)
 
-        if self.app.user_input[pg.K_UP] and not self.dino_jump:
-            self.dino_duck = False
-            self.dino_run = False
-            self.dino_jump = True
-        elif self.app.user_input[pg.K_DOWN] and not self.dino_jump:
-            self.dino_duck = True
-            self.dino_run = False
-            self.dino_jump = False
-        elif not (self.dino_jump or self.app.user_input[pg.K_DOWN]):
-            self.dino_duck = False
-            self.dino_run = True
-            self.dino_jump = False
+            if self.y >= Dinosaur.Y:
+                self.jump = False
+                self.jump_v = Dinosaur.JUMP_SPEED
+
+        if self.app.user_input[pg.K_UP] and not self.jump:
+            self.duck = False
+            self.run = False
+            self.jump = True
+        elif self.app.user_input[pg.K_DOWN] and not self.jump:
+            self.duck = True
+            self.run = False
+            self.jump = False
+        elif not (self.jump or self.app.user_input[pg.K_DOWN]):
+            self.duck = False
+            self.run = True
+            self.jump = False
 
     def draw(self):
-        self.surface.blit(self.image, self.dino_rect)
-
-    def getImage(self):
-        return self.image
-
-    def getPos(self):
-        return self.dino_rect.topleft
+        self.surface.blit(self.image, self.rect)
 
     def getMask(self):
         return pg.mask.from_surface(self.image)
+
+    def getPos(self):
+        return self.rect.topleft
 
 
 class Cloud(GameObject):
@@ -164,12 +164,13 @@ class Cloud(GameObject):
         super().__init__(app)
         self.x = WIDTH + random.randint(0, WIDTH)
         self.y = random.randint(50, 350)
+
         self.image = pg.image.load(CLOUD).convert_alpha()
         self.width = self.image.get_width()
 
     def update(self):
         self.x -= self.app.game_speed * self.app.delta_time / 1000
-        if self.x < -self.width:
+        if self.x < - self.width:
             self.x = WIDTH + random.randint(2000, 3000)
             self.y = random.randint(50, 350)
 
@@ -181,23 +182,20 @@ class Obstacle(GameObject):
     def __init__(self, app, img_path, type):
         super().__init__(app)
 
-        self.images = [pg.image.load(path) for path in img_path]
+        self.images = [pg.image.load(path).convert_alpha() for path in img_path]
         self.type = type
         self.rect = self.images[self.type].get_rect()
         self.rect.x = WIDTH
-        self.x = WIDTH
+        self.x = WIDTH  # float
 
     def update(self):
         self.x -= self.app.game_speed * self.app.delta_time / 1000
         self.rect.x = int(self.x)
-        if self.x < -self.rect.width:
+        if self.x < - self.rect.width:
             self.app.obstacles.pop()
 
     def draw(self):
         self.surface.blit(self.images[self.type], self.rect)
-
-    def getImage(self):
-        return self.images[self.type]
 
     def getMask(self):
         return pg.mask.from_surface(self.images[self.type])
@@ -207,28 +205,28 @@ class Obstacle(GameObject):
 
 
 class SmallCactus(Obstacle):
-    def __init__(self, app, image_path):
+    def __init__(self, app, img_path):
         self.type = random.randint(0, 2)
-        super().__init__(app, image_path, self.type)
+        super().__init__(app, img_path, self.type)
 
         self.rect.bottom = 500
 
 
 class LargeCactus(Obstacle):
-    def __init__(self, app, image_path):
+    def __init__(self, app, img_path):
         self.type = random.randint(0, 2)
-        super().__init__(app, image_path, self.type)
+        super().__init__(app, img_path, self.type)
 
         self.rect.bottom = 500
 
 
 class Bird(Obstacle):
-    def __init__(self, app, image_path):
+    def __init__(self, app, img_path):
         self.type = 0
-        super().__init__(app, image_path, self.type)
-        self.anim = SpriteAnimated(app, image_path, 0.2)
+        super().__init__(app, img_path, self.type)
+
+        self.anim = SpriteAnimated(app, img_path, 0.2)
         self.rect.y = 375
-        self.index = 0
 
     def update(self):
         super().update()
@@ -237,9 +235,5 @@ class Bird(Obstacle):
     def draw(self):
         self.surface.blit(self.anim.getImage(), self.rect)
 
-    def getImage(self):
-        return self.anim.getImage()
-
     def getMask(self):
         return pg.mask.from_surface(self.anim.getImage())
-
