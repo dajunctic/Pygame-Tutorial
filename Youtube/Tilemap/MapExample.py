@@ -5,8 +5,8 @@ from pytmx.util_pygame import load_pygame
 RES = WIDTH, HEIGHT = 1280, 800
 
 class Tile(pg.sprite.Sprite):
-    def __init__(self, image, pos, groups):
-        super().__init__(groups)
+    def __init__(self, image, pos, *group):
+        super().__init__(*group)
         self.image = pg.transform.scale(image, (32, 32))
         self.rect = self.image.get_rect(topleft=pos)
 
@@ -23,8 +23,8 @@ class App:
         for layer in self.map_data.visible_layers:
             for x, y, surf in layer.tiles():
                 pos = (x * 32, y * 32)
-                Tile(image=surf, pos=pos, groups=self.sprite_group)
 
+                Tile(surf, pos, self.sprite_group)
 
     def draw(self):
         self.sprite_group.draw(self.surface)
